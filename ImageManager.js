@@ -1,8 +1,8 @@
 
-//Proper use var blah = New ImageManager(path of json for metadata);
+//Proper use var smth = New ImageManager(path of json for metadata);
 
 //Something feels inelegent about relationship between dom elements and data
-//Is there someway to link them more naturally?
+//Rethink structure
 
 console.log('Loaded ImageManager.js');
 
@@ -10,12 +10,12 @@ function ImageManager(dataFile){
 	this.path = dataFile;
 	this.data = null;
 	this.imgLib = [];
-	this.classAllAs = "imgLib";//All images generate for dom get this class
+	this.classAllAs = "imgLib"; //All images generated for dom get this class
 
 	
 //ALL INITIALIZATION -------
 
-	//Try to open metadata file (needs better error handiling?). If none is found creates a blank object
+	//Try to open metadata file. If none is found creates a blank object
 	var req = new XMLHttpRequest();
 	req.open("GET",dataFile,false);
 	req.send(null);
@@ -32,15 +32,14 @@ function ImageManager(dataFile){
 	}
 
 
-	//Get file list (clarify procedure for determing scope?)
-	//Maybe should take a list of directories?
+	//Get file list
 	var req = new XMLHttpRequest();
 	req.open("GET","./indexer.php",false);
 	req.send(null);
 	var imageFiles = [];
 	var response = JSON.parse(req.responseText);
 	for (key in response){
-		imageFiles.push(response[key]); //Does this (and use of 'of' syntax) mess up the sorting?
+		imageFiles.push(response[key]); 
 	}
 
 	//If file doesn't have entry, create blank entry.
@@ -85,9 +84,9 @@ function ImageManager(dataFile){
 
 
 
-	//Function to write metadata in memory to this.path presumes presence of (vulnerable?) writeJSON.php
+	//Function to write metadata in memory to this.path requires presence of writeJSON.php
 	this.saveData = function (){
-		//Nightmare figuring out that PHP Post doesn't like JSON streams. Needed to use php://input
+		//Nightmare figuring out that PHP Post doesn't like JSON POSTs. Must use php://input
 
 		var xhr = new XMLHttpRequest();
 		xhr.open('POST', 'writeJSON.php');
@@ -105,24 +104,9 @@ function ImageManager(dataFile){
 		}));
 	}
 
-	//Write filter function that returns filtered imgLib maybe like getImgLib(tags, notTags)
-	this.withTags = function(tags){ 
-		tags = [].concat(tags);
-		var filteredIMGs = [];
-		for (img of this.imgLib){
-			for (tag of tags){
-				if (this.data[img.getAttribute('src')].indexOf(tag)!=-1){
-					filteredIMGs.push(img);
-				}
-			}
-		}
-		return filteredIMGs;
-	}
-
-	this.withoutTags = function(tags){//Confused about access format. clarify.
-
-	}
-
+	//Is it over-worked to write getter interface that just returns dom objects meeting certain filter criteria
+	//or is it better to let the user manage that and give minimal interface for DOM collection?
+	
 	this.hasTag = function(image, tag){
 		if (tag == '') {console.log('Error in ImageManager.tag, no tags passed');return true;}
 		if (this.data[image.getAttribute('src')].tags.indexOf(tag)==-1)
@@ -131,9 +115,8 @@ function ImageManager(dataFile){
 	}
 
 	//Write tag + untag functions that updates metadata and as well as classing the dom object
-	//An interesting question for me is whether this should take the filename for the img or the DOM object
-	//if it takes the filename then we have to write more outside code but somehow it feels cleaner. 
-	//not sure why...
+	//An  question for me is whether this should take the filename for the img or the DOM object
+	//Went with DOM object cause it makes the calls simpler.
 	this.tag = function (imgList, tagList){
 		//Accept both string and array as arguments
 		if (tagList == '') {console.log('Error in ImageManager.tag, no tags passed');return 0;}
@@ -162,20 +145,19 @@ function ImageManager(dataFile){
 
 	}
 
-	this.untag = function(imgList, tagList){
-		//Accept both string and array as arguments
-		tagList = [].concat(tagList);
+	this.untag = function(imgList, tagList){//Not yet implemented
+		tagList = [].concat(tagList); //Accept both string and array as arguments
 		if (tagList[0]='*') { 					//accept * to clear all tags
 			for (i = 0;i<imgList.length;i++) {
 				let fileName = imgList[i].getAttribute('src');
 				this.data[fileName].tags = []
 			}
 
-		}//Undeveloped
+		}
 
 	}
 
-	//tagSet should be recalculated after tagging and untagging...
+	//tagSet generated dynamically, used to populate menu.
 	this.tagSet = function() {
 		var results = new Set();
 		for (entry in this.data){
