@@ -1,0 +1,122 @@
+<html>
+<head>
+	<style>
+	.imgLib { width:400px;}
+	</style>
+</head>
+<body>
+
+<h1>Hello!</h1>
+
+<script>
+var metaD = new ImageManager('./tags.json');
+
+for (let img of metaD.imgLib){
+	document.body.append(img);
+
+}
+
+
+//metaD.save();
+
+
+
+function ImageManager(filePath){
+	this.path = filePath;
+	this.data = null;
+	this.tagSet = new Set();
+	this.imgLib = [];
+	this.allClass = "imgLib";//All images generate for dom get this class
+
+	
+//ALL INITIALIZATION -------
+
+	//Try to open metadata file (needs better error handiling?). If none is found creates a blank object (still no file)
+	var req = new XMLHttpRequest();
+	req.open("GET",filePath,false);
+	req.send(null);
+	var shouldFail = req.responseText;
+
+	console.log(req.status);
+	if (req.status>400){
+		console.log('No metadata found! \nCreating blank...');
+		this.data = {};
+	}
+	else {
+		console.log('Found tags.json, attempting to parse');
+		this.data = JSON.parse(req.responseText);
+	}
+
+	//Populate tagSet
+	for (file in this.data){
+		for (tag in file.tags){
+			this.tagSet.add(tag);
+		}
+	}
+
+	//Get file list (clarify procedure for determing scope?)
+	var req = new XMLHttpRequest();
+	req.open("GET","./indexer.php",false);
+	req.send(null);
+	var imageFiles = [];
+	var response = JSON.parse(req.responseText);
+	for (key in response){
+		imageFiles.push(response[key]); //Does this (and use of 'of' syntax) mess up the sorting?
+	}
+
+	//If file doesn't have entry, create blank entry.
+	for (file of imageFiles){
+		if (this.data[file]==undefined){
+			//console.log('No entry found for ' + file + ', creating blank entry...');
+			this.data[file]={tags:[]};
+		}
+	}
+
+	//Create a DOM represented array of images that can be requested and filtered by tag
+	for (let file in this.data) {
+		let newIMG = document.createElement("IMG"); //Does let instead of var here mess anything up?
+
+		newIMG.src = newIMG.src_simple = file;//Would be easier to write stripping code for src? Would like a better workaround... src gets modified to full http path when accessed
+
+		newIMG.classList.add(this.allClass); //Tag all, should be dynamic on handler creation?
+
+
+		for (tag of this.data[file].tags){
+			newIMG.classList.add("tag_"+tag);
+		} //add a class for each tag prefaced by tag_
+		
+		this.imgLib.push(newIMG);
+	}
+
+
+
+//FUNCTIONS --------------
+
+	//Function to write metadata in memory to this.path presumes presence of (vulnerable?) writeJSON.php
+	this.save = function (){
+		//Nightmare figuring out that PHP Post doesn't like JSON streams. Needed to use php://input
+
+		var xhr = new XMLHttpRequest();
+		xhr.open('POST', 'writeJSON.php');
+		xhr.setRequestHeader('Content-Type', 'application/json');
+		xhr.onload = () => { //Unbound allows direct use of this (this.path)
+		    if (xhr.status === 200) {
+		        console.log('Success writing' + this.path);
+
+		        //console.log("response: " + xhr.responseText);
+		    }
+		};
+		xhr.send(JSON.stringify({
+		    path: this.path,
+		    data: JSON.stringify(this.data)
+		}));
+	}
+
+}
+
+
+
+
+</script>
+</body>
+</html>

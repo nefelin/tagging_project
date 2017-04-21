@@ -1,0 +1,221 @@
+<html>
+<head>
+<title> Image Tagging Applet </title>
+
+<style>
+div#galleryView{
+	float:left;
+	width:75%;
+	text-align: left;
+	border:2px solid black;
+	margin:auto;
+}
+
+div#filterMenu{
+	width:10%;
+	float:left;
+	border:2px solid black;
+	text-align:left;
+	padding:10px;
+	margin-right:40px;
+	margin-left:40px;
+}
+
+.imgLib {
+
+	height:100px;
+	width:170px;
+	margin:10px 27px 10px 27px;
+	border:3px solid white;
+}
+
+.selected {
+	border:3px solid blue;
+}
+
+
+
+label {
+  margin-left:5px;
+  margin-top:10px;
+}
+
+input {
+   margin-top:10px;
+}
+
+
+
+</style>
+
+</head>
+<div id="header" style="display:block;margin-bottom:10px">
+<body style="text-align:center">
+<button onclick = "tagSelected()"> Tag Selected </button>
+</div>
+
+<div id="filterMenu"><h3>Filter by:</h3></div>
+<div id="galleryView"></div>
+
+<script src="./ImageManager.js"></script>
+<script>
+
+var imgMan = new ImageManager('./test2.json');
+for (el of imgMan.imgLib){
+	el.addEventListener("click", 
+		function (event){
+			toggleClass('selected',event.target);
+		});
+}
+
+bindGallery('galleryView');
+populateGallery()
+
+
+function filterGallery(){
+	//This approach of populating then removing seems ineffecient for large galleries.
+	//better to populate with the right tags in the first palce. 
+	clearSelected();
+	if (selectedTags.length>0){
+		populateGallery();
+		for (i=galleryDIV.children.length -1 ; i >= 0 ; i--){
+			var passing = 0;
+			for (tag of selectedTags){
+				if (imgMan.hasTag(galleryDIV.children[i], tag)){
+					passing = 1;
+				}
+			}
+			if (passing ==0) { 
+				galleryDIV.removeChild(galleryDIV.children[i]);
+			}
+		}
+	}
+	else populateGallery();
+}
+
+function tagSelected(){
+	var oldTagSet = imgMan.tagSet().slice(0);
+	var selected = document.getElementsByClassName('selected');
+	if (tags = prompt("Tag Name:")){
+		tags = tags.toLowerCase();
+		tags = tags.split(' '); //split multiple words into multiple tags
+		imgMan.tag(selected, tags);
+	}
+	clearSelected();
+
+	if (!arraysAreEqual(imgMan.tagSet(),oldTagSet)) populateFilterMenu();
+}
+
+function bindGallery(gallery){
+	window.galleryDIV = document.getElementById(gallery);
+	console.log('creating gallery');
+}
+
+function populateGallery(){
+	for (let el of imgMan.imgLib){
+		galleryDIV.append(el);
+	}
+}
+
+function clearSelected(){
+	var selected = document.getElementsByClassName('selected');
+
+	for (i=selected.length-1; i >= 0; i--){
+		selected[i].classList.remove('selected');
+	}
+}
+
+
+
+//Popup filter selections window stuff -----------------------------------------------
+
+//Necessary globals for the popup and form referenced in create/destroyPopup functions
+var selectedTags = [];
+//Create Popup Window DIV
+var filterDIV = document.getElementById("filterMenu");
+//filterDIV.style.top = galleryDIV.style.top;
+filterDIV.classList.add("popup");
+
+//Create Form to hold checkboxes
+var filterForm = document.createElement("FORM");
+filterDIV.appendChild(filterForm);
+populateFilterMenu();
+
+function populateFilterMenu(){
+
+
+	for (el of imgMan.tagSet()){
+		if (!filterForm.querySelector('#'+el)){		
+			//make checkbox
+			let newBox = document.createElement("INPUT");
+			newBox.type = "checkbox";
+			newBox.id = el;
+			  
+			//Match current tagging settings:
+			if (selectedTags.indexOf(el.toLowerCase()) != -1)
+		  	newBox.checked = true;
+			  
+			  
+			//make label
+			let newLab = document.createElement("LABEL");
+			newLab.textContent = el;
+			newLab.for = el;
+			  
+
+			//Add event listener to update form each time a box is checked:
+			newBox.addEventListener("change",()=>{
+				updateTagFilter();
+				filterGallery();
+			});
+			  
+			filterForm.appendChild(newBox);
+			filterForm.appendChild(newLab);
+			filterForm.appendChild(document.createElement("BR"));
+		}
+
+	}
+
+}
+
+function updateTagFilter(){
+	if (event.target.checked==true){
+		selectedTags.push(event.target.id.toLowerCase());
+	}
+	else{
+		remFromAr(selectedTags, event.target.id.toLowerCase());
+	}
+}
+
+//Helper functions ---------------------------------------------------------------
+function toggleClass(className, target) {
+	if (target.classList.contains(className)){
+	  	target.classList.remove(className);
+	}
+	else{
+	  	target.classList.add(className);
+	}
+
+}
+
+function remFromAr(ar, value){
+  var loc = ar.indexOf(value);
+  if (loc == -1) return 0;
+  
+  ar.splice(loc,1);
+}
+
+function arraysAreEqual(ar1, ar2){
+	if (ar1.length!=ar2.length) return false;
+	for (i=0; i<ar1.length;i++){
+
+		if (ar1[i]!=ar2[i]) return false;
+	}
+	return true;
+}
+
+
+
+
+</script>
+</body>
+</html>
