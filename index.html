@@ -74,7 +74,7 @@ populateGallery()
 
 function filterGallery(){
 	//This approach of populating then removing seems ineffecient for large galleries.
-	//better to populate with the right tags in the first palce. 
+	//Better to populate with the right tags in the first palce?
 	clearSelected();
 	if (selectedTags.length>0){
 		populateGallery();
@@ -127,14 +127,10 @@ function clearSelected(){
 
 
 
-//Popup filter selections window stuff -----------------------------------------------
-
-//Necessary globals for the popup and form referenced in create/destroyPopup functions
+//FilterMenu stuff
 var selectedTags = [];
-//Create Popup Window DIV
+//Changed from creating everything dynamically to referencing existing DOM elements 
 var filterDIV = document.getElementById("filterMenu");
-//filterDIV.style.top = galleryDIV.style.top;
-filterDIV.classList.add("popup");
 
 //Create Form to hold checkboxes
 var filterForm = document.createElement("FORM");
