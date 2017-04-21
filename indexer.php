@@ -2,14 +2,13 @@
 $path = $_GET['dir'];
 if (!$path) $path = './images/'; //Image Directory
 
-//************** Need to add ability to recourse directories and pass full paths. 
+//************** Implement ability to recourse directories and pass full paths. 
 
 
 $image_extensions = ['jpg','jpeg','png']; //Viable Extensions
 $files = scandir($path,1);
 $imgCount = 0;
 $imageFiles = array();
-$dataFile = "filenames.json";
 
 foreach (array_slice($files,0,1000) as $file){//Array slice for testing small samples.
 	if (in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), $image_extensions))
@@ -17,8 +16,6 @@ foreach (array_slice($files,0,1000) as $file){//Array slice for testing small sa
 			array_push($imageFiles, $path . $file);
 		}
 }
-
-natsort($imageFiles); //Natural sort before returning. removed shuffle, still necessary?
 
 print json_encode($imageFiles);//Pass JSON encoded version.
 ?>
