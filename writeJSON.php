@@ -1,4 +1,4 @@
-<?php //Make this more secore, probably with htaccess
+<?php //Make this more secure, probably with htaccess
 	$allData = json_decode(file_get_contents("php://input"), true);
 	echo "Writing: " . $allData[data];
 	echo "to Path: " . $allData[path];
